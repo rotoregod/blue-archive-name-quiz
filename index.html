@@ -240,6 +240,8 @@
       color: var(--ink);
       background: white;
     }
+    .field .toggle-option { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+    .field .toggle-option input { width: auto; margin: 0; accent-color: var(--blue); }
     .field-note { display: block; margin-top: 7px; color: var(--muted); font-size: .73rem; }
     .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 22px; }
     .dialog-actions button { min-height: 42px; }
@@ -319,6 +321,13 @@
           <option value="10" selected>10분</option>
           <option value="15">15분</option>
         </select>
+      </div>
+      <div class="field">
+        <label class="toggle-option" for="name-only-mode">
+          <input id="name-only-mode" type="checkbox">
+          <span>이름만 모드</span>
+        </label>
+        <span class="field-note">켜면 성을 제외한 이름만 입력해도 정답으로 인정합니다.</span>
       </div>
       <div class="field">
         <label for="hint-count">힌트 횟수</label>
@@ -402,6 +411,7 @@
     const dialog = document.querySelector("#settings-dialog");
     const schoolSelect = document.querySelector("#school-select");
     const timeSelect = document.querySelector("#time-limit");
+    const nameOnlyMode = document.querySelector("#name-only-mode");
     const hintInput = document.querySelector("#hint-count");
     const input = document.querySelector("#answer-input");
     const score = document.querySelector("#score");
@@ -427,6 +437,7 @@
     let timerId = null;
     let gameStarted = false;
     let gameFinished = false;
+    let nameOnlyModeActive = false;
 
     function formatTime(seconds) {
       const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -508,9 +519,11 @@
       hintInput.value = hintsRemaining;
       elapsedSeconds = 0;
       timeLimitSeconds = (Number(timeSelect.value) || 0) * 60;
+      nameOnlyModeActive = nameOnlyMode.checked;
       gameStarted = true;
       gameFinished = false;
-      document.querySelector("#quiz-mode").textContent = chosenSchool === "all" ? "모든 학교" : chosenSchool;
+      const selectedMode = chosenSchool === "all" ? "모든 학교" : chosenSchool;
+      document.querySelector("#quiz-mode").textContent = nameOnlyModeActive ? `${selectedMode} · 이름만` : selectedMode;
       updateClock();
       renderAnswers();
       updateProgress();
@@ -530,8 +543,13 @@
       if (!gameStarted || gameFinished) return;
       const guess = normalize(input.value);
       if (!guess) return;
-      const match = activeStudents.find(student => normalize(student.name) === guess);
-      if (match && !found.has(match.name)) {
+      const matchesGuess = student => {
+        const fullName = normalize(student.name);
+        const givenName = normalize(student.name.trim().split(/\s+/).slice(-1)[0]);
+        return fullName === guess || (nameOnlyModeActive && givenName === guess);
+      };
+      const match = activeStudents.find(student => !found.has(student.name) && matchesGuess(student));
+      if (match) {
         found.add(match.name);
         status.textContent = `${match.name} 정답!`;
         renderAnswers();
@@ -539,8 +557,8 @@
         if (found.size === activeStudents.length) {
           finishGame(`완벽해요! ${activeStudents.length}명의 학생 이름을 모두 맞혔어요.`, false);
         }
-      } else if (match) {
-        status.textContent = `${match.name}은(는) 이미 맞혔어요.`;
+      } else if (activeStudents.some(matchesGuess)) {
+        status.textContent = "이미 맞힌 이름이에요.";
       } else {
         status.textContent = "명단에 없는 이름이에요. 띄어쓰기를 확인해보세요.";
       }
@@ -555,7 +573,8 @@
       const pick = missing[Math.floor(Math.random() * missing.length)];
       hintsRemaining -= 1;
       updateProgress();
-      status.textContent = `힌트: 아직 찾지 못한 학생 중 한 명은 ‘${pick.name[0]}’(으)로 시작해요.`;
+      const hintName = nameOnlyModeActive ? pick.name.trim().split(/\s+/).slice(-1)[0] : pick.name;
+      status.textContent = `힌트: 아직 찾지 못한 학생 중 한 명은 ‘${hintName[0]}’(으)로 시작해요.`;
     });
 
     giveUpButton.addEventListener("click", () => {
