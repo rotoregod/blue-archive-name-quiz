@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>나는 학생 이름을 100명 이상 알고 있다</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d2b45;
+      --muted: #74819a;
+      --blue: #477df4;
+      --blue-dark: #285ed5;
+      --line: #e5eaf2;
+      --paper: #fff;
+      --ground: #f5f7fb;
+      --mint: #e6f8f2;
+      --shadow: 0 18px 55px rgba(34, 57, 96, .09);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 10% 5%, rgba(124, 180, 255, .16), transparent 34rem),
+        radial-gradient(ellipse at 95% 22%, rgba(135, 224, 202, .18), transparent 28rem),
+        var(--ground);
+      font-family: Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .page {
+      width: min(100% - 32px, 920px);
+      margin: 0 auto;
+      padding: 48px 0 38px;
+    }
+
+    .hero { margin: 0 auto 26px; text-align: center; }
+    .eyebrow {
+      margin: 0 0 9px;
+      color: var(--blue);
+      font-size: .73rem;
+      font-weight: 850;
+      letter-spacing: .19em;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 5vw, 2.8rem);
+      letter-spacing: -.065em;
+      line-height: 1.16;
+    }
+    .subtitle { margin: 12px 0 0; color: var(--muted); font-size: .94rem; }
+
+    .game {
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 242, .9);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfe;
+    }
+    .stat { padding: 19px 22px 18px; text-align: center; }
+    .stat + .stat { border-left: 1px solid var(--line); }
+    .stat-label {
+      display: block;
+      margin-bottom: 5px;
+      color: #8b97ab;
+      font-size: .67rem;
+      font-weight: 850;
+      letter-spacing: .13em;
+    }
+    .stat strong { font-size: 1rem; }
+    #score { color: var(--blue-dark); font-size: 1.23rem; }
+    #timer { font-variant-numeric: tabular-nums; }
+
+    .play-area { padding: 25px clamp(18px, 4vw, 34px) 28px; }
+    .progress-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 9px;
+      color: var(--muted);
+      font-size: .79rem;
+    }
+    .progress-track {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #edf1f7;
+    }
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #5e8cff, #71d5bd);
+      transition: width .25s ease;
+    }
+
+    .entry-row { display: flex; gap: 10px; margin-top: 21px; }
+    .entry-row input {
+      width: 100%;
+      min-width: 0;
+      padding: 14px 16px;
+      border: 1px solid #dfe6f0;
+      border-radius: 13px;
+      outline: 0;
+      color: var(--ink);
+      background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .entry-row input:focus { border-color: #80a5ff; box-shadow: 0 0 0 4px rgba(71, 125, 244, .11); }
+    .entry-row input:disabled { background: #f7f8fb; }
+    .primary, .secondary, .quiet {
+      border: 0;
+      border-radius: 12px;
+      font-weight: 800;
+      transition: transform .15s, background .15s, opacity .15s;
+    }
+    .primary:hover, .secondary:hover, .quiet:hover { transform: translateY(-1px); }
+    .primary { padding: 0 22px; color: #fff; background: var(--blue); white-space: nowrap; }
+    .primary:hover { background: var(--blue-dark); }
+    .secondary { padding: 12px 15px; color: #315ebd; background: #edf3ff; }
+    .secondary:hover { background: #e2ebff; }
+    .quiet { padding: 12px 15px; color: #64728a; background: #f2f4f8; }
+    .quiet:hover { background: #e9edf4; }
+    button:disabled { cursor: not-allowed; opacity: .48; transform: none; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 11px; }
+    .status-message {
+      min-height: 22px;
+      margin: 10px 0 15px;
+      color: #4a678f;
+      font-size: .85rem;
+      text-align: center;
+    }
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      max-height: 345px;
+      overflow: auto;
+      padding: 1px 3px 1px 1px;
+      scrollbar-color: #d3dbea transparent;
+      scrollbar-width: thin;
+    }
+    .answer {
+      display: flex;
+      align-items: center;
+      min-height: 37px;
+      padding: 8px 10px;
+      border: 1px solid #edf0f5;
+      border-radius: 9px;
+      color: #aab3c1;
+      background: #fbfcfe;
+      font-size: .8rem;
+      transition: .2s;
+    }
+    .answer::before {
+      width: 7px;
+      height: 7px;
+      flex: 0 0 7px;
+      margin-right: 8px;
+      border-radius: 50%;
+      background: #d9e0eb;
+      content: "";
+    }
+    .answer.found {
+      border-color: #cceee2;
+      color: #256c5a;
+      background: var(--mint);
+      font-weight: 750;
+    }
+    .answer.found::before { background: #50bd98; }
+    .answer.missed { color: #bd6370; border-color: #f4dce0; background: #fff6f7; }
+    .answer.missed::before { background: #e69aa5; }
+    .school-tag {
+      grid-column: 1 / -1;
+      margin: 11px 1px 1px;
+      color: #8390a5;
+      font-size: .69rem;
+      font-weight: 850;
+      letter-spacing: .08em;
+    }
+    .school-tag:first-child { margin-top: 0; }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 15px 22px;
+      border-top: 1px solid var(--line);
+      color: #8a95a8;
+      font-size: .72rem;
+    }
+    .footer a { color: #687fa8; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    dialog {
+      width: min(100% - 28px, 470px);
+      padding: 0;
+      border: 1px solid #e6ebf3;
+      border-radius: 20px;
+      color: var(--ink);
+      box-shadow: 0 24px 80px rgba(20, 38, 71, .22);
+    }
+    dialog::backdrop { background: rgba(25, 39, 62, .42); backdrop-filter: blur(3px); }
+    .dialog-inner { padding: 25px; }
+    .dialog-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 21px; }
+    .dialog-top h2 { margin: 0; font-size: 1.35rem; letter-spacing: -.04em; }
+    .close {
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 50%;
+      color: #75829a;
+      background: #f1f3f7;
+      font-size: 1.2rem;
+    }
+    .field { margin: 17px 0; }
+    .field label { display: block; margin-bottom: 8px; font-size: .82rem; font-weight: 800; }
+    .field select, .field input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #dfe5ef;
+      border-radius: 10px;
+      color: var(--ink);
+      background: white;
+    }
+    .field-note { display: block; margin-top: 7px; color: var(--muted); font-size: .73rem; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 22px; }
+    .dialog-actions button { min-height: 42px; }
+    .dialog-actions .primary { padding: 0 19px; }
+
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 920px); padding-top: 31px; }
+      .stat { padding: 15px 8px; }
+      .play-area { padding: 20px 14px; }
+      .answers { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+      .answer { font-size: .76rem; }
+      .entry-row { gap: 7px; }
+      .entry-row input { padding: 13px 12px; }
+      .primary { padding: 0 15px; }
+      .footer { padding: 14px; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">KIVOTOS STUDENT NAME QUIZ</p>
+      <h1>나는 학생 이름을<br>100명 이상 알고 있다</h1>
+      <p class="subtitle">키보드에 아는 이름을 입력하고, 키보토스의 학생들을 모두 찾아보세요.</p>
+    </header>
+
+    <section class="game" aria-label="학생 이름 퀴즈">
+      <div class="stats">
+        <div class="stat"><span class="stat-label">QUIZ</span><strong id="quiz-mode">모든 학교</strong></div>
+        <div class="stat"><span class="stat-label">SCORE</span><strong id="score">0 / 0</strong></div>
+        <div class="stat"><span class="stat-label">TIME</span><strong id="timer">00:00</strong></div>
+      </div>
+      <div class="play-area">
+        <div class="progress-head">
+          <span>정답 진행률</span>
+          <span id="progress-label">0%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-label="정답 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <form class="entry-row" id="answer-form">
+          <input id="answer-input" type="text" autocomplete="off" placeholder="학생 이름을 입력하세요" aria-label="학생 이름 입력" disabled>
+          <button class="primary" type="submit" id="submit-button" disabled>입력</button>
+        </form>
+        <div class="controls">
+          <button class="secondary" id="hint-button" type="button" disabled>힌트 <span id="hints-left">3회 남음</span></button>
+          <button class="quiet" id="give-up-button" type="button" disabled>포기하기</button>
+          <button class="quiet" id="restart-button" type="button">재시작</button>
+          <button class="quiet" id="settings-button" type="button">모드 선택</button>
+        </div>
+        <p class="status-message" id="status-message" aria-live="polite">모드 선택을 눌러 퀴즈를 시작하세요.</p>
+        <div class="answers" id="answers" aria-label="학생 목록"></div>
+      </div>
+      <footer class="footer">
+        <span>사용자 제공 명단 기준 · 팬메이드 퀴즈 · 블루 아카이브 공식 콘텐츠가 아닙니다.</span>
+      </footer>
+    </section>
+  </main>
+
+  <dialog id="settings-dialog" aria-labelledby="dialog-title">
+    <form class="dialog-inner" id="settings-form">
+      <div class="dialog-top">
+        <h2 id="dialog-title">퀴즈 설정</h2>
+        <button class="close" type="button" id="close-dialog" aria-label="닫기">×</button>
+      </div>
+      <div class="field">
+        <label for="school-select">학교 범위</label>
+        <select id="school-select">
+          <option value="all">모든 학교</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="time-limit">시간 제한</label>
+        <select id="time-limit">
+          <option value="0">제한 없음</option>
+          <option value="5">5분</option>
+          <option value="10" selected>10분</option>
+          <option value="15">15분</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="hint-count">힌트 횟수</label>
+        <input id="hint-count" type="number" min="0" max="20" value="3">
+        <span class="field-note">힌트는 정답 이름의 첫 글자를 알려줍니다.</span>
+      </div>
+      <div class="dialog-actions">
+        <button class="quiet" type="button" id="cancel-settings">취소</button>
+        <button class="primary" type="submit">시작하기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const schoolRoster = {
+      "아비도스": [
+        "스나오오카미 시로코", "타카나시 호시노", "오쿠소라 아야네", "쿠로미 세리카", "이자요이 노노미", "시로코*테러"
+      ],
+      "게헨나": [
+        "소라사키 히나", "아마우 아코", "시로미 이오리", "히노미야 치나츠", "리쿠하치마 아루", "아사기 무츠미",
+        "오니카타 카요코", "이구사 하루카", "쿠로다테 하루나", "시시도우 이즈미", "아카시 준코", "와니부치 아카리",
+        "아이키요 후우카", "우시마키 주리", "히무로 세나", "나츠메 이로하", "하누마 마코토", "쿄고쿠 사츠키",
+        "모토미야 치아키", "탄가 이부키", "시모쿠라 메구", "키누가와 카스미", "하타미 에리카", "요자쿠라 키라라"
+      ],
+      "밀레니엄": [
+        "하야세 유우카", "우시오 노아", "츠카츠키 리오", "쿠로사키 코유키", "오마가리 하레", "코누리 마키",
+        "오토세 코타마", "카가미 치히로", "네코즈카 히비키", "시라이시 우타하", "토요미 코토리", "미카모 네루",
+        "이치노세 아스나", "카쿠다테 카린", "무로카사 아카네", "아스마 토키", "오토하나 스미레", "노마사 레이",
+        "이즈미모토 에이미", "아케보시 히마리", "텐도 아리스", "사이바 모모이", "사이바 미도리", "하나오카 유즈", "케이"
+      ],
+      "트리니티": [
+        "아지타니 히후미", "우라와 하나코", "시라스 아즈사", "시모에 코하루", "모리즈키 스즈미", "우자와 레이사",
+        "엔도우 시미코", "코제키 우이", "쿠리무라 아이리", "이바라기 요시미", "유토리 나츠", "쿄야마 카즈사",
+        "아사가오 하나에", "스미 세리나", "아오모리 미네", "켄자키 치루기", "하네카와 하스미", "시즈야마 마시로",
+        "나카마사 이치카", "이오치 마리", "와카바 히나타", "우타즈미 사쿠라코", "미소노 미카", "키리후지 나기사",
+        "유리조노 세이아", "코마카제 라브"
+      ],
+      "백귀야행": [
+        "아사히나 피나", "카와와 시즈코", "사토하마 우미카", "카스가 츠바키", "미즈하 미모리", "이사미 카에데",
+        "와라쿠 치세", "쿠다 이즈나", "치도리 미치루", "오노 츠쿠요", "코사카 와카모", "쿠와카미 카호",
+        "아마치 니야", "카데노코지 유카리", "후와 렌게", "키류 키쿄", "고료 나구사"
+      ],
+      "산해경": [
+        "야쿠시 사야", "스노하라 슌", "스노하라 코코나", "아케시로 루미", "코노에 미나", "카야마 레이죠", "류우케 키사키"
+      ],
+      "붉은겨울": [
+        "렌카와 체리노", "이케쿠라 마리나", "사시로 토모에", "아마미 노도카", "마요이 시구레", "야스모리 미노리",
+        "히메키 메루", "아키이즈미 모미지", "아라마키 야쿠모", "미요시 타카네"
+      ],
+      "발키리": [
+        "나카츠카사 키리노", "네무가키 후부키", "오가타 칸나", "시마 코노카"
+      ],
+      "SRT": [
+        "츠키유키 미야코", "소라이 사키", "카스미자와 미유", "카제쿠라 모에", "요시노 니코", "타카쿠라 쿠루미", "텐진야마 오토기"
+      ],
+      "아리우스": [
+        "이마시노 미사키", "츠치나가 히요리", "조마에 사오리", "하카리 아츠코", "카케하시 스바루"
+      ],
+      "하이랜더": [
+        "타치바나 히카리", "타치바나 노조미", "우츠미 아오바"
+      ],
+      "와일드헌트": [
+        "시라오 에리", "이타가키 카노에", "사쿠라이 미요", "와카사 후유", "우스바 리츠", "키누이 레나"
+      ],
+      "기타": [
+        "사텐 루이코", "미카사 미코토", "쇼쿠호 미사키", "하츠네 미쿠"
+      ]
+    };
+
+    const dedupedSchoolRoster = Object.fromEntries(
+      Object.entries(schoolRoster).map(([school, names]) => [school, [...new Set(names)]])
+    );
+    const roster = Object.entries(dedupedSchoolRoster);
+    const allStudents = [];
+    for (const [school, names] of roster) {
+      for (const name of names) {
+        if (!allStudents.some(student => student.name === name)) allStudents.push({ name, school });
+      }
+    }
+
+    const dialog = document.querySelector("#settings-dialog");
+    const schoolSelect = document.querySelector("#school-select");
+    const timeSelect = document.querySelector("#time-limit");
+    const hintInput = document.querySelector("#hint-count");
+    const input = document.querySelector("#answer-input");
+    const score = document.querySelector("#score");
+    const timer = document.querySelector("#timer");
+    const list = document.querySelector("#answers");
+    const status = document.querySelector("#status-message");
+    const hintButton = document.querySelector("#hint-button");
+    const giveUpButton = document.querySelector("#give-up-button");
+    const progressTrack = document.querySelector(".progress-track");
+
+    for (const [school] of roster) {
+      const option = document.createElement("option");
+      option.value = school;
+      option.textContent = school;
+      schoolSelect.append(option);
+    }
+
+    let activeStudents = [];
+    let found = new Set();
+    let hintsRemaining = 3;
+    let elapsedSeconds = 0;
+    let timeLimitSeconds = 0;
+    let timerId = null;
+    let gameStarted = false;
+    let gameFinished = false;
+
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60).toString().padStart(2, "0");
+      const remainder = (seconds % 60).toString().padStart(2, "0");
+      return `${minutes}:${remainder}`;
+    }
+
+    function updateClock() {
+      timer.textContent = formatTime(elapsedSeconds);
+    }
+
+    function renderAnswers(revealMissed = false) {
+      list.replaceChildren();
+      const groups = new Map();
+      for (const student of activeStudents) {
+        if (!groups.has(student.school)) groups.set(student.school, []);
+        groups.get(student.school).push(student);
+      }
+
+      for (const [school, students] of groups) {
+        const heading = document.createElement("div");
+        heading.className = "school-tag";
+        heading.textContent = school;
+        list.append(heading);
+        for (const student of students) {
+          const item = document.createElement("div");
+          item.className = "answer";
+          item.textContent = found.has(student.name) ? student.name : "???";
+          if (found.has(student.name)) item.classList.add("found");
+          else if (revealMissed) {
+            item.textContent = student.name;
+            item.classList.add("missed");
+          }
+          list.append(item);
+        }
+      }
+    }
+
+    function updateProgress() {
+      const total = activeStudents.length;
+      const percentage = total ? Math.round((found.size / total) * 100) : 0;
+      score.textContent = `${found.size} / ${total}`;
+      document.querySelector("#progress-label").textContent = `${percentage}%`;
+      document.querySelector("#progress-fill").style.width = `${percentage}%`;
+      progressTrack.setAttribute("aria-valuenow", percentage);
+      document.querySelector("#hints-left").textContent = `${hintsRemaining}회 남음`;
+      hintButton.disabled = !gameStarted || gameFinished || hintsRemaining < 1;
+      giveUpButton.disabled = !gameStarted || gameFinished;
+      input.disabled = !gameStarted || gameFinished;
+      document.querySelector("#submit-button").disabled = !gameStarted || gameFinished;
+    }
+
+    function finishGame(message, revealMissed) {
+      gameFinished = true;
+      clearInterval(timerId);
+      timerId = null;
+      renderAnswers(revealMissed);
+      updateProgress();
+      status.textContent = message;
+      input.blur();
+    }
+
+    function startTimer() {
+      clearInterval(timerId);
+      timerId = setInterval(() => {
+        elapsedSeconds += 1;
+        updateClock();
+        if (timeLimitSeconds && elapsedSeconds >= timeLimitSeconds) {
+          finishGame(`시간 종료! ${found.size}명의 학생을 맞혔어요.`, true);
+        }
+      }, 1000);
+    }
+
+    function startGame() {
+      const chosenSchool = schoolSelect.value;
+      activeStudents = allStudents.filter(student => chosenSchool === "all" || student.school === chosenSchool);
+      found = new Set();
+      hintsRemaining = Math.max(0, Math.min(20, Number.parseInt(hintInput.value, 10) || 0));
+      hintInput.value = hintsRemaining;
+      elapsedSeconds = 0;
+      timeLimitSeconds = (Number(timeSelect.value) || 0) * 60;
+      gameStarted = true;
+      gameFinished = false;
+      document.querySelector("#quiz-mode").textContent = chosenSchool === "all" ? "모든 학교" : chosenSchool;
+      updateClock();
+      renderAnswers();
+      updateProgress();
+      status.textContent = `${activeStudents.length}명의 학생 이름을 맞혀보세요!`;
+      dialog.close();
+      startTimer();
+      input.value = "";
+      input.focus();
+    }
+
+    function normalize(value) {
+      return value.trim().replace(/\s+/g, "").toLocaleLowerCase();
+    }
+
+    document.querySelector("#answer-form").addEventListener("submit", event => {
+      event.preventDefault();
+      if (!gameStarted || gameFinished) return;
+      const guess = normalize(input.value);
+      if (!guess) return;
+      const match = activeStudents.find(student => normalize(student.name) === guess);
+      if (match && !found.has(match.name)) {
+        found.add(match.name);
+        status.textContent = `${match.name} 정답!`;
+        renderAnswers();
+        updateProgress();
+        if (found.size === activeStudents.length) {
+          finishGame(`완벽해요! ${activeStudents.length}명의 학생 이름을 모두 맞혔어요.`, false);
+        }
+      } else if (match) {
+        status.textContent = `${match.name}은(는) 이미 맞혔어요.`;
+      } else {
+        status.textContent = "명단에 없는 이름이에요. 띄어쓰기를 확인해보세요.";
+      }
+      input.value = "";
+      if (!gameFinished) input.focus();
+    });
+
+    hintButton.addEventListener("click", () => {
+      if (!gameStarted || gameFinished || hintsRemaining < 1) return;
+      const missing = activeStudents.filter(student => !found.has(student.name));
+      if (!missing.length) return;
+      const pick = missing[Math.floor(Math.random() * missing.length)];
+      hintsRemaining -= 1;
+      updateProgress();
+      status.textContent = `힌트: 아직 찾지 못한 학생 중 한 명은 ‘${pick.name[0]}’(으)로 시작해요.`;
+    });
+
+    giveUpButton.addEventListener("click", () => {
+      if (gameStarted && !gameFinished) finishGame(`퀴즈 종료! ${activeStudents.length}명 중 ${found.size}명을 맞혔어요.`, true);
+    });
+
+    document.querySelector("#restart-button").addEventListener("click", () => {
+      if (!schoolSelect.value || !activeStudents.length) {
+        dialog.showModal();
+        return;
+      }
+      startGame();
+    });
+    document.querySelector("#settings-button").addEventListener("click", () => dialog.showModal());
+    document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
+    document.querySelector("#cancel-settings").addEventListener("click", () => dialog.close());
+    document.querySelector("#settings-form").addEventListener("submit", event => {
+      event.preventDefault();
+      startGame();
+    });
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) dialog.close();
+    });
+
+    score.textContent = `0 / ${allStudents.length}`;
+    document.querySelector("#progress-label").textContent = "0%";
+    progressTrack.setAttribute("aria-valuenow", "0");
+    renderAnswers();
+    dialog.showModal();
+  </script>
+</body>
+</html>
